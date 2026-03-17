@@ -1,108 +1,109 @@
+from validate import validate_name, validate_age, validate_diagnosis, validate_record_number
+
 class Patient:
 
-    total_patients = 0 
-    
+    # Атрибут класса: общее количество созданных пациентов
+    total_patients = 0
+
     def __init__(self, name, age, diagnosis, record_number):
+        # Сначала инициализируем закрытые поля значением None
+        # Это позволяет избежать ошибок при вызове сеттеров
+        self.__name = None
+        self.__age = None
+        self.__diagnosis = None
+        self.__record_number = None
+        self.__is_active = True  # состояние: активен / выписан
 
-        self._validate_name(name)
-        self._validate_age(age)
-        self._validate_diagnosis(diagnosis)
-        self._validate_record_number(record_number)
+        # Используем сеттеры для присваивания значений с проверкой
+        self.name = name
+        self.age = age
+        self.diagnosis = diagnosis
+        self.record_number = record_number
 
-        self._name = name
-        self._age = age
-        self._diagnosis = diagnosis
-        self._record_number = record_number
-        self._is_active = True
+        # Увеличиваем счётчик пациентов
         Patient.total_patients += 1
 
-    def _validate_name(self, name):
-        if not isinstance(name, str) or not name.strip():
-            raise ValueError("Имя должно быть непустой строкой")
-        
-    def _validate_age(self, age):
-        if not type(age) is int:
-            raise TypeError("Возраст должно быть целым числом")
-        if 0 > age < 130:
-            raise ValueError("Возраст должен быть в пределе от 0 до 130")
-    
-    def _validate_diagnosis(self, diagnosis):
-        if not isinstance(diagnosis, str):
-            raise TypeError("Диагноз должен быть строкой")
-
-    def _validate_record_number(self, record_number):
-        if not isinstance(record_number, (str, int)):
-            raise TypeError("Номер карты должен быть строкой или числом")
-        if str(record_number).strip() == "":
-            raise ValueError("Номер карты не может быть пустым")    
-    
-    # -------- Свойства ( геттеры) -------
-
+    # ---------- Свойства (геттеры и сеттеры) ----------
     @property
     def name(self):
-        return self._name
-    
+        return self.__name
+
     @name.setter
-    def name(self, new_name):
-        self._validate_name(new_name)
-        self._name = new_name
-    
+    def name(self, value):
+        validate_name(value)
+        self.__name = value.strip()
+
     @property
     def age(self):
-        return self._age
-    
+        return self.__age
+
     @age.setter
-    def age(self, new_age):
-        self._validate_age(new_age)
-        self._age = new_age
+    def age(self, value):
+        validate_age(value)
+        self.__age = value
 
     @property
     def diagnosis(self):
-        return self._diagnosis
+        return self.__diagnosis
 
     @diagnosis.setter
-    def diagnosis(self, new_diagnosis):
-        self._validate_diagnosis(new_diagnosis)
-        self._diagnosis = new_diagnosis
+    def diagnosis(self, value):
+        validate_diagnosis(value)
+        self.__diagnosis = value.strip() if value else ""  # сохраняем как есть
 
     @property
     def record_number(self):
-        return self._record_number
+        return self.__record_number
+
+    @record_number.setter
+    def record_number(self, value):
+        validate_record_number(value)
+        self.__record_number = str(value).strip()  # храним как строку
 
     @property
     def is_active(self):
-        return self._is_active
-    
+        return self.__is_active
+    # сеттер для is_active не делаем — состояние меняется через бизнес-методы
+
+    # ---------- Методы изменения состояния ----------
+    def discharge(self):
+        """Выписать пациента (деактивировать)."""
+        if not self.__is_active:
+            raise RuntimeError("Пациент уже выписан")
+        self.__is_active = False
+
+    def reinstate(self):
+        """Восстановить пациента (если был выписан)."""
+        if self.__is_active:
+            raise RuntimeError("Пациент уже активен")
+        self.__is_active = True
+
+    def update_diagnosis(self, new_diagnosis):
+        """Изменить диагноз (только для активного пациента)."""
+        if not self.__is_active:
+            raise RuntimeError("Нельзя изменить диагноз выписанного пациента")
+        validate_diagnosis(new_diagnosis)
+        self.__diagnosis = new_diagnosis.strip() if new_diagnosis else ""
+
+    def can_prescribe_medicine(self):
+        """Проверка, может ли пациент получать лекарства (активен и возраст ≥ 18)."""
+        return self.__is_active and self.__age >= 18
+
     # ---------- Магические методы ----------
     def __str__(self):
-        status = "активен" if self._is_active else "выписан"
-        return f"Пациент: {self._name}, {self._age} лет, диагноз: '{self._diagnosis}', статус: {status}"
+        """Читаемое представление для пользователя."""
+        status = "активен" if self.__is_active else "выписан"
+        return (f"Пациент: {self.__name}, возраст: {self.__age}, "
+                f"диагноз: '{self.__diagnosis}', номер карты: {self.__record_number}, "
+                f"статус: {status}")
 
     def __repr__(self):
-        return (f"Patient(name={self._name!r}, age={self._age}, "
-                f"diagnosis={self._diagnosis!r}, record_number={self._record_number!r})")
+        """Официальное представление для отладки."""
+        return (f"Patient(name={self.__name!r}, age={self.__age}, "
+                f"diagnosis={self.__diagnosis!r}, record_number={self.__record_number!r})")
 
     def __eq__(self, other):
         """Сравнение пациентов по уникальному номеру карты."""
         if not isinstance(other, Patient):
             return False
-        return self._record_number == other._record_number
-
-    # ---------- Бизнес-методы ----------
-    def discharge(self):
-        """Выписать пациента (деактивировать)."""
-        if not self._is_active:
-            raise RuntimeError("Пациент уже выписан")
-        self._is_active = False
-
-    def update_diagnosis(self, new_diagnosis):
-        """Изменить диагноз (только для активного пациента)."""
-        if not self._is_active:
-            raise RuntimeError("Нельзя изменить диагноз выписанного пациента")
-        self._validate_diagnosis(new_diagnosis)
-        self._diagnosis = new_diagnosis
-
-    def can_prescribe_medicine(self):
-        """Проверка, может ли пациент получать лекарства (активен и совершеннолетний)."""
-        return self._is_active and self._age >= 18
-
+        return self.__record_number == other.__record_number
