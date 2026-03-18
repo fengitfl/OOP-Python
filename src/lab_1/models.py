@@ -23,7 +23,7 @@ class Patient:
         # Увеличиваем счётчик пациентов
         Patient.total_patients += 1
 
-    # ---------- Свойства (геттеры и сеттеры) ----------
+    # Свойства (геттеры и сеттеры)
     @property
     def name(self):
         return self.__name
