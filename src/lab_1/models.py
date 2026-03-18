@@ -65,45 +65,45 @@ class Patient:
         return self.__is_active
     # сеттер для is_active не делаем — состояние меняется через бизнес-методы
 
-    # ---------- Методы изменения состояния ----------
+    # Методы изменения состояния 
     def discharge(self):
-        """Выписать пациента (деактивировать)."""
+        # Выписать пациента (деактивировать)
         if not self.__is_active:
             raise RuntimeError("Пациент уже выписан")
         self.__is_active = False
 
     def reinstate(self):
-        """Восстановить пациента (если был выписан)."""
+        # Восстановить пациента (если был выписан)
         if self.__is_active:
             raise RuntimeError("Пациент уже активен")
         self.__is_active = True
 
     def update_diagnosis(self, new_diagnosis):
-        """Изменить диагноз (только для активного пациента)."""
+        # Изменить диагноз (только для активного пациента)
         if not self.__is_active:
             raise RuntimeError("Нельзя изменить диагноз выписанного пациента")
         validate_diagnosis(new_diagnosis)
         self.__diagnosis = new_diagnosis.strip() if new_diagnosis else ""
 
     def can_prescribe_medicine(self):
-        """Проверка, может ли пациент получать лекарства (активен и возраст ≥ 18)."""
+        # Проверка, может ли пациент получать лекарства (активен и возраст ≥ 18)
         return self.__is_active and self.__age >= 18
 
-    # ---------- Магические методы ----------
+    # Магические метод
     def __str__(self):
-        """Читаемое представление для пользователя."""
+        # Читаемое представление для пользователя.
         status = "активен" if self.__is_active else "выписан"
         return (f"Пациент: {self.__name}, возраст: {self.__age}, "
                 f"диагноз: '{self.__diagnosis}', номер карты: {self.__record_number}, "
                 f"статус: {status}")
 
     def __repr__(self):
-        """Официальное представление для отладки."""
+        # Официальное представление для отладки
         return (f"Patient(name={self.__name!r}, age={self.__age}, "
                 f"diagnosis={self.__diagnosis!r}, record_number={self.__record_number!r})")
 
     def __eq__(self, other):
-        """Сравнение пациентов по уникальному номеру карты."""
+        # Сравнение пациентов по уникальному номеру карты
         if not isinstance(other, Patient):
             return False
         return self.__record_number == other.__record_number
