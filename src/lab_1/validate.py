@@ -1,7 +1,7 @@
-def validate_name(value: str):
-    """Проверяет, что имя — непустая строка."""
+def validate_fio(value: str):
+    """Проверяет, что фио — непустая строка."""
     if not isinstance(value, str) or not value.strip():
-        raise ValueError("Имя должно быть непустой строкой")
+        raise ValueError("ФИО должно быть непустой строкой")
 
 def validate_age(value: int):
     """Проверяет возраст: целое число от 0 до 120."""

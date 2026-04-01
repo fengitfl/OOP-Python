@@ -1,21 +1,20 @@
-from validate import validate_name, validate_age, validate_diagnosis, validate_record_number
+from validate import validate_fio, validate_age, validate_diagnosis, validate_record_number
 
 class Patient:
 
     # Атрибут класса: общее количество созданных пациентов
     total_patients = 0
 
-    def __init__(self, name, age, diagnosis, record_number):
-        # Сначала инициализируем закрытые поля значением None
+    def __init__(self, fio, age, diagnosis, record_number):
+        # Сначала инициализируем приватные поля значением None
         # Это позволяет избежать ошибок при вызове сеттеров
-        self.__name = None
+        self.__fio = None
         self.__age = None
         self.__diagnosis = None
         self.__record_number = None
         self.__is_active = True  # состояние: активен / выписан
-
         # Используем сеттеры для присваивания значений с проверкой
-        self.name = name
+        self.fio =fio
         self.age = age
         self.diagnosis = diagnosis
         self.record_number = record_number
@@ -25,13 +24,13 @@ class Patient:
 
     # Свойства (геттеры и сеттеры)
     @property
-    def name(self):
-        return self.__name
+    def fio(self):
+        return self.__fio
 
-    @name.setter
-    def name(self, value):
-        validate_name(value)
-        self.__name = value.strip()
+    @fio.setter
+    def fio(self, value):
+        validate_fio(value)
+        self.__fio = value.strip()
 
     @property
     def age(self):
@@ -93,13 +92,13 @@ class Patient:
     def __str__(self):
         # Читаемое представление для пользователя.
         status = "активен" if self.__is_active else "выписан"
-        return (f"Пациент: {self.__name}, возраст: {self.__age}, "
+        return (f"Пациент: {self.__fio}, возраст: {self.__age}, "
                 f"диагноз: '{self.__diagnosis}', номер карты: {self.__record_number}, "
                 f"статус: {status}")
 
     def __repr__(self):
         # Официальное представление для отладки
-        return (f"Patient(name={self.__name!r}, age={self.__age}, "
+        return (f"Patient(fio={self.__fio!r}, age={self.__age}, "
                 f"diagnosis={self.__diagnosis!r}, record_number={self.__record_number!r})")
 
     def __eq__(self, other):
