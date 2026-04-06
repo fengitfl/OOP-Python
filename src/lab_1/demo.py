@@ -64,8 +64,8 @@ def scenario_2_logical_states():
 
     # 2.2 Демонстрация метода can_prescribe_medicine (зависит от возраста и активности)
     print("\n2.2 Проверка права на получение лекарств (can_prescribe_medicine):")
-    print(f"   {p_active.name}: {p_active.can_prescribe_medicine()} (требуются активность и возраст ≥18)")
-    print(f"   {p_young.name}: {p_young.can_prescribe_medicine()} (возраст 17)")
+    print(f"   {p_active.fio}: {p_active.can_prescribe_medicine()} (требуются активность и возраст ≥18)")
+    print(f"   {p_young.fio}: {p_young.can_prescribe_medicine()} (возраст 17)")
 
     # 2.3 Выписываем активного пациента
     print("\n2.3 Выписываем Анну...")

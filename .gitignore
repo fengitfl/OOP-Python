@@ -18,3 +18,4 @@ config.py.local
 .vscode/
 
 .idea/
+setup.py
