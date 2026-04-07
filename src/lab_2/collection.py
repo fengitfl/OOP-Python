@@ -20,7 +20,6 @@ class PatientList:
         self._patients.remove(patient)
 
     def remove_at(self, index):
-        """Удаляет пациента по индексу (задание 5)."""
         if index < 0 or index >= len(self._patients):
             raise IndexError("Индекс вне диапазона")
         del self._patients[index]
@@ -79,9 +78,6 @@ class PatientList:
 
     # Фильтрация (логические операции)
     def filter(self, predicate):
-        """
-        Возвращает новую коллекцию с пациентами
-        """
         new_collection = PatientList()
         for patient in self._patients:
             if predicate(patient):
