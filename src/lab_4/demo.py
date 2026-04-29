@@ -1,85 +1,139 @@
-from datetime import date
-from models import Patient, InpatientPatient, OutpatientPatient
-from interfaces import Treatable, Diagnosable, Comparable
+from models import Patient, InpatientPatient, OutpatientPatient, PatientList
+from interfaces import Printable, Comparable, CostCalculable
+from datetime import date, timedelta
 
-def print_treatment_costs(items: list[Treatable]):
-    print("\n=== Стоимость лечения (интерфейс Treatable) ===")
-    for obj in items:
-        cost = obj.calculate_cost()
-        if isinstance(obj, Diagnosable):
-            info = obj.get_diagnosis_info()
-        else:
-            info = str(obj)
-        print(f"{info[:55]:<55} | Стоимость: {cost} руб.")
+def print_all(items: list[Printable]) -> None:
+    print("=== ВЫВОД через интерфейс PRINTABLE ===")
+    for i, item in enumerate(items, 1):
+        print(f"{i}. {item.to_string()}")
 
-def sort_by_age(items: list):
-    return sorted(items, key=lambda p: p.age)
 
-def demo():
-    # 1. СОЗДАНИЕ ОБЪЕКТОВ С ДАННЫМИ
-    print("=== СОЗДАНИЕ ОБЪЕКТОВ ===")
+def calculate_total_cost(items: list[CostCalculable]) -> float:
+    total = sum(item.calculate_cost() for item in items)
+    return total
+
+def compare_patients(patient1: Comparable, patient2: Comparable) -> str:
+    result = patient1.compare_to(patient2)
+    if result < 0:
+        return f"{patient1.fio} < {patient2.fio}"
+    elif result > 0:
+        return f"{patient1.fio} > {patient2.fio}"
+    else:
+        return f"{patient1.fio} == {patient2.fio}"
+
+
+def main():
+
+    print("=== СЦЕНАРИЙ 1: СОЗДАНИЕ ПАЦИЕНТОВ РАЗНЫХ ТИПОВ ===")
+
+
+    patient1 = Patient("Иванов Иван Иванович", 45, "Гипертония", "P001")
+
+    inpatient = InpatientPatient(
+        "Петрова Мария Сергеевна", 32, "Аппендицит", "P002",
+        ward=101, daily_rate=4500
+    )
+    inpatient.add_days(5) 
+
+    outpatient = OutpatientPatient(
+        "Сидоров Алексей Владимирович", 28, "Грипп", "P003",
+        next_appointment=date.today() + timedelta(days=7),
+        attending_doctor="Смирнова Е.А.",
+        insurance_company="СОГАЗ"
+    )
+    outpatient.add_visit()
+    outpatient.add_visit()
+    outpatient.add_visit()
+
+    inpatient2 = InpatientPatient(
+        "Козлов Дмитрий Петрович", 67, "Пневмония", "P004",
+        ward=205, daily_rate=6000
+    )
+    inpatient2.add_days(10)
+
+    print("\nСозданы объекты:")
+    print(f"  - {patient1}")
+    print(f"  - {inpatient}")
+    print(f"  - {outpatient}")
+
+    print("=== СЦЕНАРИЙ 2: ИСПОЛЬЗОВАНИЕ ИНТЕРФЕЙСА PRINTABLE ===" )
+
+    printable_objects: list[Printable] = [patient1, inpatient, outpatient, inpatient2]
     
-    p1 = Patient("Иванов Иван", 45, "Гипертония", "001")
-    print(f"Создан: {p1.fio}")
+    print_all(printable_objects)
+
+    print("\nПроверка через isinstance():")
+    print(f"  patient1 implements Printable: {isinstance(patient1, Printable)}")
+    print(f"  inpatient implements Printable: {isinstance(inpatient, Printable)}")
+    print(f"  outpatient implements Printable: {isinstance(outpatient, Printable)}")
+
+    print("=== СЦЕНАРИЙ 3: ИСПОЛЬЗОВАНИЕ ИНТЕРФЕЙСА COMPARABLE ===")
+
+    print("\nСравнение пациентов (по номеру карты):")
+    print(f"  {compare_patients(inpatient, inpatient2)}")
     
-    p2 = InpatientPatient("Петрова Анна", 68, "Пневмония", "002", 
-                          ward=302, daily_rate=5500)
-    p2.add_days(7)  # добавляем 7 дней
-    print(f"Создан: {p2.fio}, добавлено дней: {p2.days_stayed}")
+    print("\nДо сортировки по номеру карты:")
+    collection = PatientList()
+    collection.add(inpatient2)  # P004
+    collection.add(patient1)    # P001
+    collection.add(inpatient)   # P002
+    collection.add(outpatient)  # P003
     
-    p3 = OutpatientPatient("Сидоров Олег", 20, "Мигрень", "003",
-                           next_appointment=date(2026,5,15),
-                           attending_doctor="Доктор Хаус",
-                           consultation_price=2500)
-    p3.add_visit()  # обавляем визиты
-    p3.add_visit()
-    p3.add_visit()  # 3 визита
-    print(f"Создан: {p3.fio}, визитов: {p3.visits_count}")
+    for p in collection:
+        print(f"    {p.fio}: карта №{p.record_number}")
 
-    patients = [p1, p2, p3]
+    print("\nПосле сортировки через интерфейс Comparable:")
+    collection.sort_by_comparable()
+    for p in collection:
+        print(f"    {p.fio}: карта №{p.record_number}")
 
-    # 2. ДЕМОНСТРАЦИЯ ИНТЕРФЕЙСА DIAGNOSABLE
-    print("\n=== Демонстрация интерфейса Diagnosable ===")
-    for p in patients:
-        if isinstance(p, Diagnosable):
-            print(p.get_diagnosis_info())
+    print("=== СЦЕНАРИЙ 4: ИСПОЛЬЗОВАНИЕ ИНТЕРФЕЙСА COSTCALCULABLE ===")
 
-    # 3. ДЕМОНСТРАЦИЯ ИНТЕРФЕЙСА TREATABLE 
-    print_treatment_costs(patients)
+    calculable_objects: list[CostCalculable] = [inpatient, outpatient, inpatient2]
 
-    print("\n=== Проверка реализации интерфейсов (isinstance) ===")
-    for p in patients:
-        print(f"{p.fio}: Treatable? {isinstance(p, Treatable)}, "
-              f"Diagnosable? {isinstance(p, Diagnosable)}, "
-              f"Comparable? {isinstance(p, Comparable)}")
+    print("\nИнформация о стоимости лечения:")
+    for obj in calculable_objects:
+        print(f"  {obj.fio}: {obj.calculate_cost():.2f} руб.")
+        print(f"    Детали: {obj.get_diagnosis_info()}")
 
-    # 5. ФИЛЬТРАЦИЯ ПО ИНТЕРФЕЙСУ
-    treatable_objects = [p for p in patients if isinstance(p, Treatable)]
-    print(f"\nОбъектов, реализующих Treatable: {len(treatable_objects)}")
+    total = calculate_total_cost(calculable_objects)
+    print(f"\nОбщая стоимость лечения всех пациентов: {total:.2f} руб.")
 
-    # 6. СОРТИРОВКА ПО ВОЗРАСТУ
-    p4 = Patient("Алексеев Дмитрий", 30, "Здоров", "004")
-    p5 = InpatientPatient("Морозова Елена", 55, "Гастрит", "005", ward=101, daily_rate=4000)
-    p5.add_days(3)  # Добавляем дни и для этого пациента
-    unsorted = [p4, p2, p5, p1, p3]
-    sorted_by_age = sort_by_age(unsorted)
+    print("=== СЦЕНАРИЙ 5: ПРОВЕРКА МНОЖЕСТВЕННОЙ РЕАЛИЗАЦИИ ИНТЕРФЕЙСОВ ===")
+
+    test_patient = OutpatientPatient(
+        "Тестов Тест Тестович", 35, "Здоров", "P999",
+        attending_doctor="Доктор Айболит"
+    )
+
+    print(f"\nОбъект {test_patient.fio} реализует интерфейсы:")
+    print(f"Printable:     {isinstance(test_patient, Printable)}")
+    print(f"Comparable:    {isinstance(test_patient, Comparable)}")
+    print(f"CostCalculable:{isinstance(test_patient, CostCalculable)}")
+    print(f"Diagnosable:   {isinstance(test_patient, Diagnosable)}")
+    print(f"Treatable:     {isinstance(test_patient, Treatable)}")
+
+    print("=== СЦЕНАРИЙ 6: ФИЛЬТРАЦИЯ КОЛЛЕКЦИИ ПО ИНТЕРФЕЙСАМ ===")
+
+    large_collection = PatientList()
+    large_collection.add(patient1)
+    large_collection.add(inpatient)
+    large_collection.add(inpatient2)
+    large_collection.add(outpatient)
+
+    print(f"\nВсего пациентов в коллекции: {len(large_collection)}")
     
-    print("\n=== Сортировка по возрасту (используя поле age) ===")
-    for p in sorted_by_age:
-        print(f"{p.fio}: {p.age} лет")
-
-    # 7. ПОЛИМОРФИЗМ БЕЗ УСЛОВИЙ
-    def process_treatment(obj: Treatable):
-        return f"Сумма к оплате: {obj.calculate_cost():.2f} руб."
-
-    print("\n=== Полиморфизм без условий ===")
-    for p in patients:
-        print(process_treatment(p))
+    # Фильтрация по интерфейсам
+    printable_patients = large_collection.get_printable()
+    calculable_patients = large_collection.get_cost_calculable()
     
-    # 8. ДОПОЛНИТЕЛЬНО: ПОКАЗЫВАЕМ ФОРМУЛЫ РАСЧЁТА
-    print("\n=== ПОЯСНЕНИЕ РАСЧЁТОВ ===")
-    print(f"Петрова Анна: {p2.daily_rate} руб/день × {p2.days_stayed} дней = {p2.calculate_cost()} руб.")
-    print(f"Сидоров Олег: {p3.consultation_price} руб/визит × {p3.visits_count} визитов = {p3.calculate_cost()} руб.")
+    print(f"\nПациенты, реализующие Printable: {len(printable_patients)}")
+    print(f"Пациенты, реализующие CostCalculable: {len(calculable_patients)}")
+    
+    print("\nИнформация о пациентах с CostCalculable:")
+    for p in calculable_patients:
+        print(f"  • {p.fio}: стоимость лечения = {p.calculate_cost():.2f} руб.")
 
 if __name__ == "__main__":
-    demo()
+    from interfaces import Diagnosable, Treatable
+    main()

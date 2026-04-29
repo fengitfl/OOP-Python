@@ -1,7 +1,5 @@
-from interfaces import Printable, Comparable, CostCalculable, Diagnosable, Treatable
+from abc import ABC, abstractmethod
 from datetime import date
-from functools import total_ordering
-
 
 def validate_fio(value: str):
     if not isinstance(value, str) or not value.strip():
@@ -23,9 +21,25 @@ def validate_record_number(value):
     if str(value).strip() == "":
         raise ValueError("Номер карты не может быть пустым")
 
+class Treatable(ABC):
 
-@total_ordering
-class Patient(Printable, Comparable, Treatable, Diagnosable):
+    @abstractmethod
+    def calculate_cost(self):
+        pass
+
+class Diagnosable(ABC):
+
+    @abstractmethod
+    def get_diagnosis_info(self):
+        pass
+
+class Comparable(ABC):
+
+    @abstractmethod
+    def compare_to(self, other):
+        pass
+    
+class Patient(Treatable, Diagnosable):
     total_patients = 0
 
     def __init__(self, fio, age, diagnosis, record_number):
@@ -98,39 +112,13 @@ class Patient(Printable, Comparable, Treatable, Diagnosable):
 
     def can_prescribe_medicine(self):
         return self.__is_active and self.__age >= 18
-
-    # Реализация Printable
-    def to_string(self) -> str:
-        status = "активен" if self.__is_active else "выписан"
-        return (f"Пациент: {self.__fio}, возраст: {self.__age}, "
-                f"диагноз: '{self.__diagnosis}', статус: {status}")
-
-    # Реализация Comparable
-    def compare_to(self, other) -> int:
-        """Сравнение по номеру карты"""
-        if not isinstance(other, Patient):
-            raise TypeError("Можно сравнивать только с объектами Patient")
-        # Преобразуем в строку для корректного сравнения
-        return (1 if self.record_number > other.record_number else
-                -1 if self.record_number < other.record_number else 0)
     
-    def __eq__(self, other):
-        if not isinstance(other, Patient):
-            return False
-        return self.record_number == other.record_number
-    
-    def __lt__(self, other):
-        if not isinstance(other, Patient):
-            return NotImplemented
-        return self.record_number < other.record_number
-
-    # Реализация Diagnosable
-    def get_diagnosis_info(self) -> str:
-        return f"Диагноз: {self.diagnosis}. Пациент: {self.fio}"
-
-    # Реализация CostCalculable (базовая)
+    # Реализация интерфейсов
     def calculate_cost(self) -> float:
         return 0.0
+
+    def get_diagnosis_info(self) -> str:
+        return f"Диагноз: {self.diagnosis}. Пациент: {self.fio}"
 
     def __str__(self):
         status = "активен" if self.__is_active else "выписан"
@@ -142,15 +130,20 @@ class Patient(Printable, Comparable, Treatable, Diagnosable):
         return (f"Patient(fio={self.__fio!r}, age={self.__age}, "
                 f"diagnosis={self.__diagnosis!r}, record_number={self.__record_number!r})")
 
+    def __eq__(self, other):
+        if not isinstance(other, Patient):
+            return False
+        return self.__record_number == other.__record_number
 
-class InpatientPatient(Patient, CostCalculable):
+
+class InpatientPatient(Patient):
     def __init__(self, fio, age, diagnosis, record_number, ward, admission_date=None, daily_rate=5000):
         super().__init__(fio, age, diagnosis, record_number)
         self._ward = None
         self.ward = ward
         self.admission_date = admission_date if admission_date else date.today()
         self.daily_rate = daily_rate
-        self._days_stayed = 0
+        self._days_stayed = 0  # Используем защищённый атрибут
 
     @property
     def ward(self):
@@ -178,19 +171,12 @@ class InpatientPatient(Patient, CostCalculable):
             raise ValueError("Количество дней должно быть положительным")
         self._days_stayed += days
 
-    # Переопределение CostCalculable
     def calculate_cost(self) -> float:
         return self.daily_rate * self._days_stayed
 
-    # Переопределение Diagnosable
     def get_diagnosis_info(self) -> str:
         return (f"Стационарный пациент {self.fio}, диагноз: {self.diagnosis}. "
                 f"Требуется госпитализация, палата {self.ward}")
-
-    # Переопределение Printable
-    def to_string(self) -> str:
-        return (f"[СТАЦИОНАР] {self.fio} | {self.age} лет | {self.diagnosis} | "
-                f"Палата {self.ward} | Дней: {self._days_stayed}")
 
     def __str__(self):
         base_str = super().__str__()
@@ -204,7 +190,7 @@ class InpatientPatient(Patient, CostCalculable):
                 f"ward={self.ward}, admission_date={self.admission_date.isoformat()!r})")
 
 
-class OutpatientPatient(Patient, CostCalculable):
+class OutpatientPatient(Patient):
     def __init__(self, fio, age, diagnosis, record_number, next_appointment=None,
                  attending_doctor=None, insurance_company=None, consultation_price=2000):
         
@@ -216,7 +202,7 @@ class OutpatientPatient(Patient, CostCalculable):
         self.attending_doctor = attending_doctor
         self.insurance_company = insurance_company
         self.consultation_price = consultation_price
-        self._visits_count = 0
+        self._visits_count = 0  # Используем защищённый атрибут
 
     @property
     def next_appointment(self):
@@ -275,22 +261,15 @@ class OutpatientPatient(Patient, CostCalculable):
         self.next_appointment = new_date
         return f"Визит перенесён с {old_date} на {new_date}"
 
-    # Переопределение CostCalculable
+    # ПЕРЕОПРЕДЕЛЯЕМ МЕТОД calculate_cost
     def calculate_cost(self) -> float:
         return self.consultation_price * self._visits_count
 
-    # Переопределение Diagnosable
     def get_diagnosis_info(self) -> str:
         next_date = self._next_appointment.isoformat() if self._next_appointment else "не назначен"
         doctor = self._attending_doctor if self._attending_doctor else "не назначен"
         return (f"Амбулаторный пациент {self.fio}, диагноз: {self.diagnosis}. "
                 f"Следующий визит: {next_date}, врач: {doctor}")
-
-    # Переопределение Printable  
-    def to_string(self) -> str:
-        next_date = self._next_appointment.isoformat() if self._next_appointment else "нет"
-        return (f"[АМБУЛАТОРНО] {self.fio} | {self.age} лет | {self.diagnosis} | "
-                f"След. визит: {next_date} | Визитов: {self._visits_count}")
 
     def can_prescribe_medicine(self):
         if self.age < 21:
@@ -308,139 +287,8 @@ class OutpatientPatient(Patient, CostCalculable):
 
     def __repr__(self):
         next_date = self._next_appointment.isoformat() if self._next_appointment else None
-        return (f"OutpatientPatient(fio={self._Patient__fio!r}, age={self._Patient__age}, "
-                f"diagnosis={self._Patient__diagnosis!r}, record_number={self._Patient__record_number!r}, "
-                f"next_appointment={next_date!r})")
-
-from interfaces import Printable, Comparable, CostCalculable
-from typing import List, Any, Callable, Optional
-
-
-class PatientList:
-    # Коллекция пациентов с поддержкой интерфейсов
-
-    def __init__(self):
-        self._patients: List[Any] = []  # Any - список может содержать любые объекты
-
-    def add(self, patient: Any) -> None:
-        # Добавляет пациента (Any - проверка типа выполняется в рантайме)
-        from models import Patient
-        if not isinstance(patient, Patient):
-            raise TypeError(f"Можно добавлять только Patient, получен {type(patient).__name__}")
-        for p in self._patients:
-            if p.record_number == patient.record_number:
-                raise ValueError(f"Пациент с номером {patient.record_number} уже существует")
-        self._patients.append(patient)
-
-    def remove(self, patient: Any) -> None:
-        # Удаляет пациента (Any - может быть передан любой объект)
-        if patient not in self._patients:
-            raise ValueError("Такого пациента нет в коллекции")
-        self._patients.remove(patient)
-
-    def remove_at(self, index: int) -> None:
-        if index < 0 or index >= len(self._patients):
-            raise IndexError("Индекс вне диапазона")
-        del self._patients[index]
-
-    def get_all(self) -> List[Any]:
-        # Возвращает копию списка с объектами любого типа
-        return self._patients.copy()
-
-    # Фильтрация по интерфейсам 
-    def get_printable(self) -> List[Printable]:
-        # Возвращает всех пациентов, реализующих интерфейс Printable
-        return [p for p in self._patients if isinstance(p, Printable)]
-
-    def get_comparable(self) -> List[Comparable]:
-        # Возвращает всех пациентов, реализующих интерфейс Comparable
-        return [p for p in self._patients if isinstance(p, Comparable)]
-
-    def get_cost_calculable(self) -> List[CostCalculable]:
-        # Возвращает всех пациентов, у которых можно рассчитать стоимость
-        return [p for p in self._patients if isinstance(p, CostCalculable)]
-
-    # Сортировка через интерфейс Comparable
-    def sort_by_comparable(self, reverse: bool = False) -> None:
-        if not all(isinstance(p, Comparable) for p in self._patients):
-            raise TypeError("Не все объекты реализуют интерфейс Comparable")
-    
-        self._patients.sort(key=lambda p: p, reverse=reverse)
-
-    # Универсальный метод filter с Any
-    def filter(self, predicate: Callable[[Any], bool]) -> 'PatientList':
-        # Фильтрует коллекцию по любому предикату
-        # predicate принимает объект любого типа (Any) и возвращает bool
-
-        new_collection = PatientList()
-        for patient in self._patients:
-            if predicate(patient):  # patient может быть любого типа (Any)
-                new_collection.add(patient)
-        return new_collection
-
-    # Поиск с использованием Any
-    def find_by_fio(self, fio_part: str) -> List[Any]:
-        # Ищет пациентов по части ФИО, возвращает список любых объектов
-        result = [p for p in self._patients if fio_part.lower() in p.fio.lower()]
-        if not result:
-            raise ValueError(f"Пациенты с ФИО, содержащим '{fio_part}', не найдены")
-        return result
-
-    def find_by_id(self, record_id: Any) -> Any:
-        # Ищет пациента по номеру карты
-        # record_id может быть строкой, числом или любым другим типом (Any)
-        for patient in self._patients:
-            if patient.record_number == str(record_id):
-                return patient
-        raise ValueError(f"Пациент с номером {record_id} не найден")
-
-    def find_by_diagnosis(self, diagnosis: str) -> List[Any]:
-        # Ищет пациентов по диагнозу
-        result = [p for p in self._patients if diagnosis.lower() in p.diagnosis.lower()]
-        if not result:
-            raise ValueError(f"Пациенты с диагнозом, содержащим '{diagnosis}', не найдены")
-        return result
-
-    # Сортировка с Any в key-функции
-    def sort_by_fio(self, reverse: bool = False) -> None:
-        self._patients.sort(key=lambda p: p.fio, reverse=reverse)
-
-    def sort_by_age(self, reverse: bool = False) -> None:
-        self._patients.sort(key=lambda p: p.age, reverse=reverse)
-
-    def sort_by_record_number(self, reverse: bool = False) -> None:
-        self._patients.sort(key=lambda p: p.record_number, reverse=reverse)
-
-    # Фильтрация по состоянию
-    def get_active(self) -> 'PatientList':
-        return self.filter(lambda p: p.is_active)
-
-    def get_discharged(self) -> 'PatientList':
-        return self.filter(lambda p: not p.is_active)
-
-    def get_adults(self) -> 'PatientList':
-        return self.filter(lambda p: p.age >= 18)
-
-    def get_by_min_age(self, min_age: int) -> 'PatientList':
-        return self.filter(lambda p: p.age >= min_age)
-
-    # Магические методы  
-    def __len__(self) -> int:
-        return len(self._patients)
-
-    def __iter__(self):
-        return iter(self._patients)
-
-    def __getitem__(self, index: Any) -> Any:
-        if isinstance(index, slice):
-            # Обработка среза
-            return self._patients[index]
-        elif isinstance(index, int):
-            length = len(self._patients)
-            if index < 0:
-                index = length + index
-            if index < 0 or index >= length:
-                raise IndexError("Индекс вне диапазона")
-            return self._patients[index]
-        else:
-            raise TypeError("Индекс должен быть целым числом или срезом")
+        return (f"OutpatientPatient(fio={self.__fio!r}, age={self.__age}, "
+                f"diagnosis={self.__diagnosis!r}, record_number={self.__record_number!r}, "
+                f"next_appointment={next_date!r}, "
+                f"attending_doctor={self._attending_doctor!r}, "
+                f"insurance_company={self._insurance_company!r})")
