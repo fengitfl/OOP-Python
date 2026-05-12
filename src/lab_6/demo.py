@@ -5,7 +5,6 @@ from container import TypedCollection, Displayable, Scorable
 
 
 def create_patients() -> list[Patient]:
-    """Создаёт список пациентов для тестирования."""
     # Обычные пациенты
     p1 = Patient("Алексеев Дмитрий", 30, "Здоров", "004")
     p2 = Patient("Иванов Иван", 45, "Гипертония", "001")
@@ -13,8 +12,6 @@ def create_patients() -> list[Patient]:
     # Стационарный пациент
     p3 = InpatientPatient("Петрова Анна", 68, "Пневмония", "002", ward=302, daily_rate=5500)
     p3.add_days(7)
-    
-    # Ещё один стационарный
     p4 = InpatientPatient("Морозова Елена", 55, "Гастрит", "005", ward=101, daily_rate=4000)
     p4.add_days(3)
     
@@ -36,71 +33,66 @@ def create_patients() -> list[Patient]:
 
 
 def demo_level3() -> None:
-    """Оценка 3: демонстрация Generic-коллекции."""
-    print("\n" + "=" * 70)
-    print(" ОЦЕНКА 3: Generic-коллекция TypedCollection ".center(70, "="))
-    print("=" * 70)
+    print("==== Generic-коллекция TypedCollection ==== ")
     
     # Создаём типизированную коллекцию
     coll = TypedCollection[Patient]()
     patients = create_patients()
     coll.add_all(patients)
     
-    print(f"📊 Создана коллекция с {len(coll)} пациентами.")
-    print("\n📋 Список пациентов (через display()):")
+    print(f"Создана коллекция с {len(coll)} пациентами.")
+    print("\n Список пациентов (через display()):")
     for i, patient in enumerate(coll.get_all(), 1):
         print(f"   {i}. {patient.display()}")
     
     # Демонстрация итератора
-    print("\n🔄 Итерация по коллекции:")
+    print("\n Итерация по коллекции:")
     for patient in coll:
         print(f"   - {patient.fio}, {patient.age} лет")
 
 
 def demo_level4() -> None:
-    """Оценка 4: демонстрация find, filter, map."""
-    print("\n" + "=" * 70)
-    print(" ОЦЕНКА 4: find, filter, map ".center(70, "="))
-    print("=" * 70)
+    # демонстрация find, filter, map.
+    print("==== find, filter, map ==== ")
     
     coll = TypedCollection[Patient]()
     patients = create_patients()
     coll.add_all(patients)
     
     # 1. find() - элемент найден
-    print("\n🔍 Поиск пациента старше 60 лет (find):")
+    print("\n Поиск пациента старше 60 лет (find):")
     found = coll.find(lambda p: p.age > 60)
     if found:
         print(f"   Найден: {found.display()}")
     
     # 2. find() - элемент не найден
-    print("\n🔍 Поиск пациента старше 100 лет (find):")
+    print("\n Поиск пациента старше 100 лет (find):")
     not_found = coll.find(lambda p: p.age > 100)
     print(f"   Результат: {not_found}")
     
     # 3. filter() - отбор взрослых пациентов
-    print("\n📋 Фильтр: пациенты старше 30 лет (filter):")
+    print("\n Фильтр: пациенты старше 30 лет (filter):")
     adults = coll.filter(lambda p: p.age > 30)
     for patient in adults:
         print(f"   - {patient.display()}")
     
     # 4. map() - извлечение ФИО (изменение типа: Patient → str)
-    print("\n📋 map() -> извлечение ФИО (Patient → str):")
+    print("\n map() -> извлечение ФИО (Patient → str):")
     names: list[str] = coll.map(lambda p: p.fio)
     print(f"   {names}")
     
     # 5. map() - извлечение стоимости лечения (Patient → float)
-    print("\n📋 map() -> стоимость лечения (Patient → float):")
+    print("\n map() -> стоимость лечения (Patient → float):")
     costs: list[float] = coll.map(lambda p: p.calculate_treatment_cost())
     print(f"   {[f'{c:.0f}' for c in costs]}")
     
     # 6. map() - извлечение возраста (Patient → int)
-    print("\n📋 map() -> возраст (Patient → int):")
+    print("\n map() -> возраст (Patient → int):")
     ages: list[int] = coll.map(lambda p: p.age)
     print(f"   {ages}")
     
     # 7. Демонстрация смены типа (главное для 4-й оценки)
-    print("\n✨ Демонстрация смены типа результата (метод map):")
+    print("\n Демонстрация смены типа результата (метод map):")
     result1 = coll.map(lambda p: p.fio)           # Тип: list[str]
     result2 = coll.map(lambda p: p.age)           # Тип: list[int]
     result3 = coll.map(lambda p: p.calculate_treatment_cost())  # Тип: list[float]
@@ -110,14 +102,12 @@ def demo_level4() -> None:
 
 
 def demo_level5() -> None:
-    """Оценка 5: демонстрация Protocol и TypeVar с bound."""
-    print("\n" + "=" * 70)
-    print(" ОЦЕНКА 5: Protocol (структурная типизация) ".center(70, "="))
-    print("=" * 70)
+    # Оценка 5: демонстрация Protocol и TypeVar с bound.
+    print("==== Protocol (структурная типизация) ==== ")
     
     patients = create_patients()
     
-    # ===== Сценарий 1: Displayable коллекция =====
+    # Сценарий 1: Displayable коллекция
     print("\n📌 Сценарий 1: TypedCollection[Displayable]")
     displayable_coll = TypedCollection[Displayable]()
     
@@ -128,7 +118,7 @@ def demo_level5() -> None:
     for item in displayable_coll.get_all():
         print(f"      - {item.display()}")
     
-    # ===== Сценарий 2: Scorable коллекция =====
+    # Сценарий 2: Scorable коллекция
     print("\n📌 Сценарий 2: TypedCollection[Scorable]")
     scorable_coll = TypedCollection[Scorable]()
     
@@ -139,19 +129,19 @@ def demo_level5() -> None:
     for item in scorable_coll.get_all():
         print(f"      - {item.display()} → score: {item.score():.0f} руб.")
     
-    # ===== Анализ через map + sum (простой способ) =====
-    print("\n📊 Анализ через map + sum:")
+    # Анализ через map + sum (простой способ)
+    print("\n Анализ через map + sum:")
     scores = scorable_coll.map(lambda p: p.score())
     total_score = sum(scores)
     print(f"   Общая стоимость лечения всех пациентов: {total_score:.0f} руб.")
     
-    # ===== Анализ через reduce (демонстрация правильного использования) =====
-    print("\n📊 Анализ через reduce (аккумулятор отдельно):")
+    # Анализ через reduce (демонстрация правильного использования) 
+    print("\n Анализ через reduce (аккумулятор отдельно):")
     total_score_reduce = scorable_coll.reduce(lambda acc, p: acc + p.score(), 0.0)
     print(f"   Общая стоимость через reduce: {total_score_reduce:.0f} руб.")
     
-    # ===== Демонстрация: классы НЕ наследуются от Protocol =====
-    print("\n🔍 Проверка: классы Patient, InpatientPatient, OutpatientPatient")
+    #  Демонстрация: классы НЕ наследуются от Protocol 
+    print("\n Проверка: классы Patient, InpatientPatient, OutpatientPatient")
     print("   НЕ наследуются от Displayable или Scorable, но подходят под протоколы,")
     print("   так как имеют методы display() и score() — это структурная типизация!")
     
