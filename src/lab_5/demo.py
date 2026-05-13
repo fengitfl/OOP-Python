@@ -12,7 +12,6 @@ from strategies import (
 
 
 def create_test_collection() -> PatientCollection:
-    """Создаёт коллекцию пациентов для тестирования."""
     collection = PatientCollection()
     
     # Обычные пациенты

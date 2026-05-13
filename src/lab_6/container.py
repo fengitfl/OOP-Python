@@ -1,36 +1,33 @@
-# container.py
 from typing import TypeVar, Generic, Callable, Optional, List, Iterator, Protocol, runtime_checkable
 from functools import reduce as functools_reduce
 
-# ========== TYPE VARIABLES ==========
 T = TypeVar('T')          # Тип элементов коллекции
 R = TypeVar('R')          # Тип результата для map() и reduce()
 
 
-# ========== GENERIC COLLECTION ==========
+# GENERIC COLLECTION 
 class TypedCollection(Generic[T]):
-    """
-    Generic-версия коллекции для хранения элементов типа T.
-    Поддерживает основные методы работы с коллекцией.
-    """
+    # Generic-версия коллекции для хранения элементов типа T
+    # Поддерживает основные методы работы с коллекцией
+
 
     def __init__(self, items: Optional[List[T]] = None) -> None:
         self._items: List[T] = list(items) if items else []
 
     def add(self, item: T) -> None:
-        """Добавляет один элемент."""
+        # Добавляет один элемент
         self._items.append(item)
 
     def add_all(self, items: List[T]) -> None:
-        """Добавляет несколько элементов."""
+        # Добавляет несколько элементов
         self._items.extend(items)
 
     def remove(self, item: T) -> None:
-        """Удаляет элемент (если есть)."""
+        # Удаляет элемент (если есть)
         self._items.remove(item)
 
     def get_all(self) -> List[T]:
-        """Возвращает копию списка элементов."""
+        # Возвращает копию списка элементов
         return self._items.copy()
 
     def __len__(self) -> int:
@@ -41,33 +38,31 @@ class TypedCollection(Generic[T]):
 
     def __iter__(self) -> Iterator[T]:
         return iter(self._items)
-
-    # ========== МЕТОДЫ ДЛЯ ОЦЕНКИ 4 ==========
+    
     def find(self, predicate: Callable[[T], bool]) -> Optional[T]:
-        """Возвращает первый элемент, удовлетворяющий условию."""
+        # Возвращает первый элемент, удовлетворяющий условию
         for item in self._items:
             if predicate(item):
                 return item
         return None
 
     def filter(self, predicate: Callable[[T], bool]) -> List[T]:
-        """Возвращает список всех элементов, удовлетворяющих условию."""
+        # Возвращает список всех элементов, удовлетворяющих условию
         return [item for item in self._items if predicate(item)]
 
     def map(self, transform: Callable[[T], R]) -> List[R]:
-        """Применяет функцию преобразования к каждому элементу."""
+        # Применяет функцию преобразования к каждому элементу
         return [transform(item) for item in self._items]
 
     def reduce(self, func: Callable[[R, T], R], initial: R) -> R:
-        """
-        Сворачивает коллекцию с начальным значением.
-        func(аккумулятор, элемент) -> новый_аккумулятор
-        Тип аккумулятора (R) может отличаться от типа элементов (T).
-        """
-        return functools_reduce(func, self._items, initial)
+        
+        # Сворачивает коллекцию с начальным значением
+        # func(аккумулятор, элемент) -> новый_аккумулятор
+        # Тип аккумулятора (R) может отличаться от типа элементов (T)
+         return functools_reduce(func, self._items, initial)
 
     def sort_by(self, key_func: Callable[[T], any], reverse: bool = False) -> 'TypedCollection[T]':
-        """Сортирует коллекцию и возвращает себя (для цепочек)."""
+        # Сортирует коллекцию и возвращает себя (для цепочек)
         self._items.sort(key=key_func, reverse=reverse)
         return self
 
@@ -75,16 +70,16 @@ class TypedCollection(Generic[T]):
         return f"TypedCollection({len(self._items)} items)"
 
 
-# ========== PROTOCOLS ДЛЯ ОЦЕНКИ 5 ==========
+#  PROTOCOLS 
 @runtime_checkable
 class Displayable(Protocol):
-    """Протокол: объект должен иметь метод display() -> str."""
+    # Протокол: объект должен иметь метод display() -> str
     def display(self) -> str:
         ...
 
 @runtime_checkable
 class Scorable(Protocol):
-    """Протокол: объект должен иметь метод score() -> float."""
+    # Протокол: объект должен иметь метод score() -> float
     def score(self) -> float:
         ...
 
